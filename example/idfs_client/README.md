@@ -1,5 +1,3 @@
-# idfs_client
-
 > OASISBloc IDFS example - IDFS client
 
 ## Build Setup
@@ -28,3 +26,8 @@ npm test
 ```
 
 For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+=======
+# Install
+    $ npm install
+    $ npm install --save axios bootstrap-vue
+>>>>>>> f20e213754f541d2caca2629c4b5eb620c467309
