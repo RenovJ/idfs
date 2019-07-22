@@ -7,9 +7,6 @@ const cors = require('cors');
 const fileUpload = require('express-fileupload');
 const Buffer = require('buffer').Buffer
 const EosApi = require('eosjs-api')
-// const { Api, JsonRpc, RpcError } = require('eosjs')
-// const Eos = require('eosjs')
-// const { JsSignatureProvider } = require('eosjs/dist/eosjs-jssig');
 const crypto = require('crypto')
 const eccrypto = require('eccrypto')
 const bs58 = require('bs58')
@@ -21,8 +18,9 @@ const app = express();
 app.use(cors());
 app.use(fileUpload());
 
-const idfs_private_key = '5JfamdVo1DkQ8sTZoTK94xJzMuUQypPxprbQ7RBeHLeUEkSjnzw';
-const idfs_public_key = 'OSB56tSQutcPf4MGfwqZsyTiYvmBpHVf8NJXoDRXHc6sf6ZGPuQHR';
+const idfs_private_key = '5JfamdVo1DkQ8sTZoTK94xJzMuUQypPxprbQ7RBeHLeUEkSjnzw'
+const idfs_public_key = 'OSB56tSQutcPf4MGfwqZsyTiYvmBpHVf8NJXoDRXHc6sf6ZGPuQHR'
+var idfs_cluster_id = 0
 
 // connect to ipfs daemon API server
 var ipfs = ipfsClient(IPFS_IPADDR, IPFS_API_PORT, { protocol: 'http' }) // leaving out the arguments will default to these values
@@ -45,49 +43,11 @@ const osbConfig = {
 };
 
 const eos = EosApi(osbConfig)
-/*
-const rpc = new JsonRpc(`${config.protocol}://${config.host}:${config.port}`)
-const signatureProvider = new JsSignatureProvider([idfs_private_key])
-const api = new Api({ rpc, signatureProvider, chainId: `${config.chainId}` })
-*/
 var server = app.listen(3002, "0.0.0.0", function(){
     console.log("Express server has started on port 3002")
 })
 
 app.get('/', function(req, res){
-    (async () => {
-    	eos.getTableRows({
-            json: true,
-            code: config.osbTrader,
-            scope: config.osbTrader,
-            table: "datas",
-            table_key: ""
-        }).then(result => {
-            var dataList = [];
-            if (!result) {
-                console.log("No Data");
-                resultmsg = "";
-            } else {
-                for (var i = 0; i < result.rows.length; i++) {
-                    if (result.rows[i].datatypename != "") {
-                        //console.log("checked type :" + result.rows[i].datatypename);
-                        dataList.push(result.rows[i]);
-                    }
-                }
-                //console.log(dataList);
-                res.json({
-                    result: true,
-                    menuList: dataList
-                });
-            }
-        }).catch(function(error) {
-            console.log(error);
-            res.json({
-                result: false,
-                menuList: '데이터 읽기 실패'
-            });
-        });
-    })();
 });
 
 app.post('/v0/add_data', async function(req, res){
@@ -106,7 +66,6 @@ app.post('/v0/add_data', async function(req, res){
 	} else if (data_type === 'file') {
 		encryptedData = req.files['data'].data
 	}
-	
 
 	var decryptedDataBuffer
 	if (isDataEncrypted === true) {
@@ -126,57 +85,56 @@ app.post('/v0/add_data', async function(req, res){
 	const calculatedDataHash = bs58.encode(combined)
 	
 	// 복호화 된 데이터의 해시값을 블록체인에서 확인한다.(무결성 확인)
-	/*
-	eos.getTableRows({
-	    json: true,
-	    code: config.osbTrader,
-	    scope: config.osbTrader,
-	    table: "datas",
-	    table_key: ""
-	}).then(result => {
-	    var dataList = [];
-	    if (!result) {
-	        console.log("No Data");
-	        resultmsg = "";
-	    } else {
-	        for (var i = 0; i < result.rows.length; i++) {
-	            if (result.rows[i].datatypename != "") {
-	                //console.log("checked type :" + result.rows[i].datatypename);
-	                dataList.push(result.rows[i]);
-	            }
-	        }
-	        //console.log(dataList);
-	        res.json({
-	            result: true,
-	            menuList: dataList
-	        });
-	    }
-	}).catch(function(error) {
-	    console.log(error);
-	    res.json({
-	        result: false,
-	        menuList: '데이터 읽기 실패'
-	    });
-	});
-	*/
-	
-	// 문제가 없다면 IPFS에 암호화되어 있는 데이터를 업로드 한다.
-	const result = await ipfs.add(encryptedData)
-	.then(function(result){
-		const hash = result[0].hash
-		
-		db.put(hash, encryptedDecryptKey, function (err) {
-			if (err) return console.log('Failed to insert the decrypt_key in db', err) // some kind of I/O error
-			ret = {
-				data_hash_cid: hash,
-				data_hash: calculatedDataHash
+    const dataList = await eos.getTableRows({
+        json: true,
+        code: config.osbTrader,
+        scope: config.osbTrader,
+        table: "data",
+        table_key: dataId
+    }).catch(function(error) {
+        console.log(error);
+        res.json({
+            result: false,
+            msg: 'failed to retrieve data list'
+        });
+    });
+    
+	for (int i = 0; i < dataList.length; i++) {
+		if (dataList.rows[i].data_id === reservedDataId) {
+			if (dataList.rows[i].data_hash_original !== calculatedDataHash) {
+				res.json({
+			        result: false,
+			        msg: 'The data hash is unmatched!'
+			    });
 			}
-			res.json(ret)
-		})
-	})
-	.catch(function (error) {
-		res.send(error)
-	})
+			
+			// 문제가 없다면 IPFS에 암호화되어 있는 데이터를 업로드 한다.
+			const result = await ipfs.add(encryptedData)
+			.then(function(result){
+				const hash = result[0].hash
+				
+				db.put(hash, encryptedDecryptKey, function (err) {
+					if (err) return console.log('Failed to insert the decrypt_key in db', err) // some kind of I/O error
+					ret = {
+						data_hash_cid: hash,
+						data_hash: calculatedDataHash
+					}
+					res.json(ret)
+				})
+			})
+			.catch(function (error) {
+				res.send(error)
+			})
+			
+			return
+		}
+	}
+	
+	// error!
+	res.json({
+        result: false,
+        msg: 'wrong reserved data id!'
+    });
 });
 
 app.get('/v0/get_data', function(req, res){
@@ -187,24 +145,95 @@ app.get('/v0/get_data', function(req, res){
 });
 
 app.get('/v0/get_decrypt_key', async function(req, res){
-	const cid = req.query.cid
-    const requesterPublicKey = req.query.public_key
+	const dataId = req.query.data_id
+    const fragmentNo = req.query.fragment_no
+    const cid = req.query.cid
+    const buyerAccount = req.query.buyer_account
+    const buyerKey = req.query.buyer_key
 
-    // 키 요청자가 데이터 사용 권한이 있는 자인지를 블록체인에서 확인
+    (async () => {
+    	const buyhistoryList = await eos.getTableRows({
+            json: true,
+            code: config.osbTrader,
+            scope: config.osbTrader,
+            table: "buyhistory",
+            table_key: ""
+        })
+        
+        if (!buyhistoryList) {
+        	// error!
+        }
+        
+    	var i;
+        for (i = 0; i < buyhistoryList.rows.length; i++) {
+        	if (buyhistoryList.rows[i].data_id === dataId &&
+        		buyhistoryList.rows[i].buyer === buyerAccount &&
+        		buyhistoryList.rows[i].buyer_key === buyerKey) {
+        		break
+        	}
+        }
+        if (i === buyhistoryList.rows.length) {
+        	// error! - the buyerAccount don't have authority to access the data with the inputs
+        	res.send("error! - the buyerAccount don't have authority to access the data with the inputs")
+        }
+        
+        const dataList = await eos.getTableRows({
+            json: true,
+            code: config.osbTrader,
+            scope: config.osbTrader,
+            table: "data",
+            table_key: dataId
+        }).catch(function(error) {
+            console.log(error);
+            res.json({
+                result: false,
+            });
+        });
 
-    db.get(cid, async function (err, value) {
-	    if (err) return console.log(cid + ' - does not exist')
+        var dataFragmentList = null
+        for (i = 0; i < dataList.rows.length; i++) {
+        	if (dataList.rows[i].data_id === dataId) {
+        		dataFragmentList = dataList.rows[i].fragments
+        		break
+        	}
+        }
+        if (!dataFragmentList) {
+        	// error! Basically unreachable to here.
+        	res.send("error! - Basically unreachable to here.")
+        }
+        
+        console.log(dataFragmentList)
+        
+        var fragment = null
+        for (i = 0; i < dataFragmentList.length; i++) {
+        	if (fragmentNo		=== dataFragmentList.rows[i].fragment_no &&
+        		cid				=== dataFragmentList.rows[i].hash_idfs &&
+        		idfs_cluster_id === dataFragmentList.rows[i].idfs_cluster_id) {
+        		fragment = dataFragmentList.rows[i]
+        		break;
+        	}
+        }
+        if (i === dataFragmentList.length) {
+        	// error! Not matched fragment
+        	res.send("error! - Not matched fragment")
+        }
 
-	    const encryptedDecryptKey = value
-	    // encryptedDecryptKey를 idfs_private_key로 복호화하여 decryptKey를 얻음
-	    const privkeyBuffer = bs58.decode(idfs_private_key).slice(1, 33);
-	    const decryptKeyBuffer = await eccrypto.decrypt(privkeyBuffer, Buffer.from(encryptedDecryptKey));
-	    // decryptKey를 키 요청자의 pubkey로 암호화
-	    const requesterPubkeyBuffer = bs58.decode(requesterPublicKey.slice(3)).slice(0, 33);
-	    const decryptKeyForRequesterBuffer = await eccrypto.encrypt(requesterPubkeyBuffer, decryptKeyBuffer);
-	    const ret = JSON.stringify(decryptKeyForRequesterBuffer.toString())
-	    res.json( ret )
-	  })
+        db.get(cid, async function (err, value) {
+		    if (err) res.send(cid + ' - does not exist')
+	
+		    const encryptedDecryptKey = value
+		    // encryptedDecryptKey를 idfs_private_key로 복호화하여 decryptKey를 얻음
+		    const privkeyBuffer = bs58.decode(idfs_private_key).slice(1, 33);
+		    const decryptKeyBuffer = await eccrypto.decrypt(privkeyBuffer, Buffer.from(encryptedDecryptKey));
+		    // decryptKey를 키 요청자의 pubkey로 암호화
+		    const buyerKeyBuffer = bs58.decode(buyerKey.slice(3)).slice(0, 33);
+		    const decryptKeyForRequesterBuffer = await eccrypto.encrypt(buyerKeyBuffer, decryptKeyBuffer);
+		    const ret = JSON.stringify(decryptKeyForRequesterBuffer.toString())
+		    res.json( ret )
+		  })
+        
+	})();
+	
 });
 
 app.get('/v0/get_public_key', function(req, res){
