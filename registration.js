@@ -114,7 +114,7 @@ async function addCluster(clusterKey) {
 		      }],
 		      data: {
 		    	idfs_account: config.IDFS_ACCOUNT,	// Keeper's account name
-	    	    cluster_key: clusterKeyHash,	// IPFS Cluster secret key의 hash값
+	    	    cluster_key_hash: clusterKeyHash,	// IPFS Cluster secret key의 hash값
 		      },
 		    }]
 		}, {
