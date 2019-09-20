@@ -37,6 +37,7 @@ const osbConfig = {
   broadcast: true,
   verbose: false,
   sign: true,
+  keyProvider: config.IDFS_ACCOUNT_PRIVATE_KEY
 //  expireInSeconds: 60
 }
 
