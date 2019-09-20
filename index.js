@@ -107,7 +107,7 @@ app.post('/v0/add_data', async function(req, res){
 	var encryptKey
 	if (isDataEncrypted === true) {
 		// 받은 복호화 키는 보관자의 public key로 암호화 되어 있으므로, 보관자의 private key로 복호화하여 원래 복호화 키를 얻는다.
-		const decryptKeyBuffer = await decode(encryptedDecryptKeyBuffer, config.IDFS_ACCOUNT_PRIVATE_KEY)
+		const decryptKeyBuffer = await decode(encryptedDecryptKeyBuffer, config.IDFS_KEEPER_PRIVATE_KEY)
 		decryptKey = decryptKeyBuffer.toString()
 		// 원래 복호화 키를 이용하여 받은 데이터를 복호화 한다.
 		decryptedDataBuffer = await decode(encryptedData, decryptKey)
@@ -281,7 +281,7 @@ app.post('/v0/upload_decrypt_key', async function(req, res){
 	
 	// 받은 복호화 키는 보관자의 public key로 암호화 되어 있으므로, 보관자의 private key로 복호화하여 원래 복호화 키를 얻는다.
 	const encryptedDecryptKeyBuffer = Buffer(encryptedDecryptKey)
-	const decryptKeyBuffer = await decode(encryptedDecryptKeyBuffer, config.IDFS_ACCOUNT_PRIVATE_KEY)
+	const decryptKeyBuffer = await decode(encryptedDecryptKeyBuffer, config.IDFS_KEEPER_PRIVATE_KEY)
 	const decryptKey = decryptKeyBuffer.toString()
 	const encryptKey = EosjsEcc.privateToPublic(decryptKey, config.PUBKEY_PREFIX)
 	
@@ -452,7 +452,7 @@ app.get('/v0/get_decrypt_key', async function(req, res){
 app.get('/v0/get_public_key', function(req, res){
 	res.json({
 		result: true,
-		public_key: EosjsEcc.privateToPublic(config.IDFS_ACCOUNT_PRIVATE_KEY, config.PUBKEY_PREFIX)
+		public_key: EosjsEcc.privateToPublic(config.IDFS_KEEPER_PRIVATE_KEY, config.PUBKEY_PREFIX)
 	})
 })
 
