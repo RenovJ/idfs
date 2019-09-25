@@ -142,7 +142,7 @@ async function addKeeper(capacity, cluster_id) {
 			    	idfs_account: config.IDFS_ACCOUNT,
 		    	    capacity: capacity,
 			    	cluster_id: cluster_id,
-		    	    idfs_public_key: EosjsEcc.privateToPublic(config.IDFS_KEEPER_PRIVATE_KEY, 'EOS'),
+		    	    idfs_public_key: EosjsEcc.privateToPublic(config.IDFS_KEEPER_PRIVATE_KEY, config.PUBKEY_PREFIX),
 		    	    ipaddr: config.IDFS_IPADDR,
 			    	port: config.IDFS_PORT,
 		      },
