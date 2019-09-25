@@ -3,7 +3,6 @@ const Eosjs = require('eosjs')
 const EosjsEcc = require('eosjs-ecc')
 const ipfsClient = require('ipfs-http-client')
 const level = require('level')
-const db = level('idfs_management')
 const crypto = require('crypto')
 const bs58 = require('bs58')
 
