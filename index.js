@@ -327,8 +327,8 @@ app.post('/v0/upload_decrypt_key', async function(req, res){
 })
 	
 app.get('/v0/get_decrypt_key', async function(req, res){
-	const dataId = req.query.data_id
-    const fragmentNo = req.query.fragment_no
+	const dataId = parseInt(req.query.data_id)
+    const fragmentNo = parseInt(req.query.fragment_no)
     const cid = req.query.cid
     const buyId = req.query.buy_id
     const buyerAccount = req.query.buyer_account
