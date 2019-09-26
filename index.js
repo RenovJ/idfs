@@ -229,7 +229,8 @@ app.post('/v0/add_data', async function(req, res){
 app.get('/v0/get_data', function(req, res){
 	console.log('get_data')
 	console.log(req.body)
-	const cid = req.body.cid
+	console.log(req.query)
+	const cid = req.query.cid
 	const dataUrl = `${config.IPFS_API_PROTOCOL}://${config.IPFS_IPADDR}:${config.IPFS_GATEWAY_PORT}/ipfs/${cid}`
 	res.setHeader("content-disposition", "attachment; filename="+cid)
 	res.json({
@@ -326,15 +327,15 @@ app.post('/v0/upload_decrypt_key', async function(req, res){
 })
 	
 app.get('/v0/get_decrypt_key', async function(req, res){
-	const dataId = req.body.data_id
-    const fragmentNo = req.body.fragment_no
-    const cid = req.body.cid
-    const buyId = req.body.buy_id
-    const buyerAccount = req.body.buyer_account
-    const buyerKey = req.body.buyer_key
+	const dataId = req.query.data_id
+    const fragmentNo = req.query.fragment_no
+    const cid = req.query.cid
+    const buyId = req.query.buy_id
+    const buyerAccount = req.query.buyer_account
+    const buyerKey = req.query.buyer_key
     
 	console.log('get_decrypt_key')
-	console.log(req.body)
+	console.log(req.query)
 
 	const buyhistoryList = await eos.getTableRows({
         json: true,
