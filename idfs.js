@@ -90,17 +90,16 @@ app.post('/v0/add_data', async function(req, res){
 	const reservedDataId    	= req.body.reserved_data_id
 	const fragmentNo	    	= req.body.fragment_no
 	const encryptedDecryptKey	= req.body.decrypt_key
-	const data_type			    = req.body.data_type
 	const data			    	= req.body.data
 	const isDataEncrypted		= req.body.is_data_encrypted
 
 	const encryptedDecryptKeyBuffer = Buffer(encryptedDecryptKey)
-	var encryptedData
-	if (data_type === 'text') {
+	var encryptedData = Buffer(data)
+/*	if (data_type === 'text') {
 		encryptedData = Buffer.from(data)
 	} else if (data_type === 'file') {
 		encryptedData = req.files['data'].data
-	}
+	}*/
 
 	var decryptedDataBuffer
 	var decryptKey
@@ -461,7 +460,7 @@ app.get('/v0/get_public_key', function(req, res){
 function getDataHash(data) {
 	// validating the parameter
 	if (!Buffer.isBuffer(data)) {
-		console.log('data shoud be Buffer')
+		console.log('data should be Buffer')
 		return
 	}
 	
