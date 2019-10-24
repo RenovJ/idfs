@@ -70,7 +70,7 @@ async function keeperList() {
         limit: 5000,
     }).catch(function(error) {
         console.log(error)
-        reject('failed to retrieve cluster list')
+        console.log('failed to retrieve cluster list')
     });
 	
 	const idfsList = await eosjs.getTableRows({
@@ -82,7 +82,7 @@ async function keeperList() {
         limit: 5000,
     }).catch(function(error) {
         console.log(error)
-        reject('failed to retrieve idfs list')
+        console.log('failed to retrieve idfs list')
     });
 	
 	for (var c = 0; c < clusterList.rows.length; c++) {
