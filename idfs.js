@@ -17,7 +17,7 @@ const db = level('idfs')
 const app = express()
 app.use(cors())
 app.use(fileUpload())
-app.use(express.json())
+app.use(express.json({ limit : "500gb" })
 
 const SECP256K1_TYPE = 714
 
@@ -85,7 +85,6 @@ app.get('/', function(req, res){
 
 app.post('/v0/add_data', async function(req, res){
 	console.log('\nadd_data')
-	console.log(req.body)
 	
 	const providerAccount   	= req.body.provider_account
 	const contractAddr	    	= req.body.contract_addr
@@ -123,7 +122,6 @@ app.post('/v0/add_data', async function(req, res){
 	// 복호화 된 데이터의 해시값을 얻는다.
 	const dataHashOriginal = getDataHash(decryptedDataBuffer)
 	console.log('dataHashOriginal: ' + dataHashOriginal)
-	console.log(encryptedData)
 	
 	// 블록체인에서 무결성 확인을 위해 해당 데이터 정보를 가져온다.
     const dataList = await eos.getTableRows({
@@ -518,7 +516,6 @@ async function decode(buf, decryptKey) {
       mac: mac,
     }
     console.log('\ndecode()')
-    console.log(buf)
 	const decryptKeyBuffer = bs58.decode(decryptKey).slice(1, 33)
     const data = await eccrypto.decrypt(decryptKeyBuffer, encryptedData)
 	return data
