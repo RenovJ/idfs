@@ -17,7 +17,7 @@ const db = level('idfs')
 const app = express()
 app.use(cors())
 app.use(fileUpload())
-app.use(express.json({ limit : "500gb" })
+app.use(express.json({ limit : "500gb" }))
 
 const SECP256K1_TYPE = 714
 
