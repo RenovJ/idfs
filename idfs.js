@@ -121,6 +121,7 @@ app.post('/v0/add_data', async function(req, res){
 	console.log('dataHashEncrypted: ' + dataHashEncrypted)
 	// 복호화 된 데이터의 해시값을 얻는다.
 	const dataHashOriginal = getDataHash(decryptedDataBuffer)
+	decryptedDataBuffer = null
 	console.log('dataHashOriginal: ' + dataHashOriginal)
 	
 	// 블록체인에서 무결성 확인을 위해 해당 데이터 정보를 가져온다.
@@ -213,6 +214,10 @@ app.post('/v0/add_data', async function(req, res){
 			
 			console.log('add_data return:')
 			console.log(ret)
+
+			result[0] = null
+			data = null
+			req.body.data = null
 		})
 	})
 	.catch(function (error) {
@@ -223,6 +228,17 @@ app.post('/v0/add_data', async function(req, res){
 	        msg: 'Failed to uploading the encrypted data to IPFS'
 	    })
 	})
+
+	decryptKeyBuffer.iv = null
+    decryptKeyBuffer.ephemPublicKey = null
+    decryptKeyBuffer.ciphertext = null
+    decryptKeyBuffer.mac = null
+	decryptKeyBuffer = null
+	encryptedData.iv = null
+	encryptedData.ephemPublicKey = null
+	encryptedData.ciphertext = null
+	encryptedData.mac = null
+	encryptedData = null
 })
 
 app.get('/v0/get_data', function(req, res){
@@ -249,9 +265,9 @@ app.post('/v0/upload_decrypt_key', async function(req, res){
 	console.log('upload_decrypt_key')
 	console.log(req.body)
 	
-	//블록체인에서 해당 데이터 조각이 내가 속한 클러스터에 등록된 것인지 확인
-	// 복호화 된 데이터의 해시값을 블록체인에서 확인한다.(무결성 확인)
-	// 블록체인에서 무결성 확인을 위해 해당 데이터 정보를 가져온다.
+    //블록체인에서 해당 데이터 조각이 내가 속한 클러스터에 등록된 것인지 확인
+    // 복호화 된 데이터의 해시값을 블록체인에서 확인한다.(무결성 확인)
+    // 블록체인에서 무결성 확인을 위해 해당 데이터 정보를 가져온다.
     const dataList = await eos.getTableRows({
         json: true,
         code: contractAddr,
@@ -520,6 +536,7 @@ async function decode(buf, decryptKey) {
     const data = await eccrypto.decrypt(decryptKeyBuffer, encryptedData)
 	return data
 }
+
 
 
 
