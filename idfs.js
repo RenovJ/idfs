@@ -95,7 +95,7 @@ app.post('/v0/add_data', async function(req, res){
 	const isDataEncrypted		= req.body.is_data_encrypted
 
 	const encryptedDecryptKeyBuffer = Buffer(encryptedDecryptKey)
-	var encryptedData = Buffer(data)
+	const encryptedData = Buffer(data)
 /*	if (data_type === 'text') {
 		encryptedData = Buffer.from(data)
 	} else if (data_type === 'file') {
@@ -216,7 +216,6 @@ app.post('/v0/add_data', async function(req, res){
 			console.log(ret)
 
 			result[0] = null
-			data = null
 			req.body.data = null
 		})
 	})
@@ -228,17 +227,6 @@ app.post('/v0/add_data', async function(req, res){
 	        msg: 'Failed to uploading the encrypted data to IPFS'
 	    })
 	})
-
-	decryptKeyBuffer.iv = null
-    decryptKeyBuffer.ephemPublicKey = null
-    decryptKeyBuffer.ciphertext = null
-    decryptKeyBuffer.mac = null
-	decryptKeyBuffer = null
-	encryptedData.iv = null
-	encryptedData.ephemPublicKey = null
-	encryptedData.ciphertext = null
-	encryptedData.mac = null
-	encryptedData = null
 })
 
 app.get('/v0/get_data', function(req, res){
