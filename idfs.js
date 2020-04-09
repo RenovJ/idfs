@@ -20,6 +20,7 @@ app.use(fileUpload())
 app.use(express.json({ limit : "500gb" }))
 
 const SECP256K1_TYPE = 714
+const DAY_TIMESTAMP = 60 * 60 * 24
 
 process.env.NODE_ENV = ( process.env.NODE_ENV && ( process.env.NODE_ENV ).trim().toLowerCase() == 'production' ) ? 'production' : 'development'
 if (process.env.NODE_ENV == 'production') {
@@ -460,6 +461,71 @@ app.get('/v0/get_public_key', function(req, res){
 	})
 })
 
+app.get('/v0/get_data_keeping_list', async function(req, res){
+	var upper_bound = 999999
+	var dataList = []
+	var dataKeepingList = []
+	const currentTimestamp = Math.floor(new Date().getTime() / 1000)
+	while(true) {
+	    dataList = await eos.getTableRows({
+	        json: true,
+	        code: config.DATA_TRADE_CONTRACT_NAME,
+	        scope: config.DATA_TRADE_CONTRACT_NAME,
+	        table: "data",
+	        table_key: "data_id",
+	        lower_bound: 0,
+	        upper_bound: upper_bound,
+	        limit:50,
+	    }).catch(function(error) {
+	        console.log(error);
+	        res.json({
+	            result: false,
+	            msg: 'failed to retrieve data list'
+	        });
+	        return
+	    });
+	    dataList = dataList.rows
+	    
+	    if (dataList.length === 0) {
+	    	break;
+	    }
+	    
+	    var fragmentList = []
+	    for (var idxData = dataList.length - 1; idxData >= 0; idxData--) {
+	    	for (var idxFrg = 0; idxFrg < dataList[idxData].fragments.length; idxFrg++) {
+	    		var expireTimestamp = dataList[idxData].timestamp + dataList[idxData].period * DAY_TIMESTAMP
+	    		if (dataList[idxData].fragments[idxFrg].idfs_cluster_id === config.IDFS_CLUSTER_ID &&
+	    			expireTimestamp > currentTimestamp) {
+	    			// founded
+	    			dataKeepingList.push({
+	    				data_id: dataList[idxData].data_id,
+	    				fragment_no: dataList[idxData].fragments[idxFrg].fragment_no,
+	    				fragment_size: dataList[idxData].fragments[idxFrg].size,
+	    				fragment_cid: dataList[idxData].fragments[idxFrg].cid,
+	    				registration_timestamp: dataList[idxData].timestamp,
+	    				expire_timestamp: dataList[idxData].timestamp + dataList[idxData].period * DAY_TIMESTAMP,
+	    				//uploading_progress: 100, // TODO: reflect for uploading progress
+	    				//register: '',
+	    			})
+	    		}
+	    	}
+	    }
+
+	    if (dataList[0].data_id === 1) {
+	    	break;
+	    } else {
+	    	upper_bound = dataList[0].data_id - 1
+	    }
+	    
+	    
+	    break;
+	}
+	
+	res.json({
+		result: true,
+		datalist: dataKeepingList
+	})
+})
 
 function getDataHash(data) {
 	// validating the parameter
